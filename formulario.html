@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corte de Bobinas</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #FA8072;
+      color: #800000;
+      margin: 0;
+      padding: 0;
+    }
+
+
+    form {
+      width: 90%;
+      max-width: 600px;
+      margin: 20px auto;
+      border: 1px solid #b49d9d;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+      background-color: #FFE4E1;
+    }
+
+    h1 {
+      text-align: center;
+      color: #b30000;
+    }
+
+    label {
+      color: #b30000;
+    }
+
+    input[type=number],
+    input[type=text] {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #b30000;
+      box-sizing: border-box;
+      border-radius: 5px;
+    }
+
+    input[type=button],
+    input[type=submit] {
+      width: 100%;
+      padding: 12px 20px;
+      border-color: darkred;
+      border-radius: 5px;
+      font-family: 'Arial', sans-serif;
+      color: white;
+      background-color: maroon;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    input[type=button]:active {
+      background-color: #8B0000;
+      transform: scale(0.95);
+    }
+
+    input[type=button]:disabled {
+      background-color: #8B0000;
+      cursor: not-allowed;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0, 0, 0);
+      background-color: rgba(0, 0, 0, 0.4);
+      padding-top: 60px;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 300px;
+      text-align: center;
+      border-radius: 10px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-button {
+      background-color: maroon;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #loading {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      height: 100%;
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40px;
+      height: 40px;
+      margin: -20px 0 0 -20px;
+      border: 4px solid #b30000;
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Media Query para telas menores (ex: dispositivos móveis) */
+    @media (max-width: 600px) {
+      form {
+        width: 95%;
+        padding: 10px;
+      }
+
+      input[type=button] {
+        padding: 10px;
+      }
+    }
+  </style>
+
+  <!-- Adicionar bibliotecas jQuery e jQuery UI -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+</head>
+
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+  <form id="formulario" action="" method="get">
+    <h1>REGISTRO DE CONTAGEM DE BOBINAS</h1>
+    <label for="codigo">Código:</label><br>
+    <input type="text" id="codigo" name="codigo" placeholder="Digite o código da Bobina ou Slitter"><br><br>
+    <div class="form-group">
+      <label for="descricao">Descrição:</label><br>
+      <input type="text" id="descricao" name="descricao"><br><br>
+    </div>
+    <label for="peso">Peso:</label><br>
+    <input type="text" id="peso" name="peso" placeholder="Digite o peso da Bobina ou Slitter"><br><br>
+    <label for="lote">Lote:</label><br>
+    <input type="text" id="lote" name="lote" placeholder="Digite o lote da Bobina ou Slitter"><br><br>
+    <label for="observacao">Observação:</label><br>
+    <input type="text" id="observacao" name="observacao" placeholder="Ex.: Parcial"><br><br>
+    <input id="enviar" type="button" name="enviar" value="Enviar formulário" onclick="coletarDados()">
+    <div id="alerta" class="alert"></div>
+  </form>
+  <!-- Modal -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="fecharModal()">&times;</span>
+      <p id="modalMessage"></p>
+      <button class="modal-button" onclick="fecharModal()">OK</button>
+    </div>
+  </div>
+  <script>
+    const codigos = [
+      "532862", "532863", "532864", "532866", "532859", "532874", "084628", "535408", "536064", "535939", "535935", "535936", "532867", "535937", "535938", "536239", "536240", "536147", "536148", "536149", "536150", "536151", "536152", "536134", "532868", "532865", "532873", "532858", "532869", "532860", "532861", "533745", "536507", "533207", "532882", "536306", "532809", "532810", "532883", "532877", "532876", "532941", "534509", "533418", "535436", "535437", "083624", "536530", "535689", "543134", "543136", "533947", "533796", "535636", "535637", "535638", "536698"];
+
+  const descricoes = {
+    "532862": "BOBINA 0.80 X 1000 (Nº22) ZAR345 Z350 NBR7008",
+    "532863": "BOBINA 0.95 X 1000 (Nº20) ZAR345 Z350 NBR7008",
+    "532864": "BOBINA 1.25 X 1000 (Nº18) ZAR345 Z350 NBR7008",
+    "532866": "BOBINA 1.55 X 1000 (Nº16) ZAR345 Z350 NBR7008",
+    "532859": "BOBINA 1.95 X 1000 (Nº14) ZAR345 Z350 NBR7008",
+    "532874": "BOBINA 2.70 X 1000 (Nº12) ZAR345 Z350 NBR7008",
+    "084628": "BOBINA 3.00 X 1000 (Nº11) ZAR345 Z350 NBR7008",
+    "535408": "BOBINA 3.00 X 1200 (Nº11) ZAR345 Z350 NBR7008",
+    "536064": "BOBINA 1.25 X 1000 (N.18) ZAR450 Z350 NBR7008",
+    "535939": "BOBINA 1.55 X 1000 (Nº16) ZAR450 Z350 NBR7008",
+    "535935": "BOBINA 1.95 X 1000 (Nº14) ZAR450 Z350 NBR7008",
+    "535936": "BOBINA 2.30 X 1000 (Nº13) ZAR450 Z350 NBR7008",
+    "532867": "BOBINA 2.30 X 1000 (Nº13) ZAR345 Z350 NBR7008",
+    "535937": "BOBINA 2.70 X 1000 (Nº12) ZAR450 Z350 NBR7008",
+    "535938": "BOBINA 3.00 X 1000 (Nº11) ZAR450 Z350 NBR7008",
+    "536239": "BOBINA 0.80 X 1000 (Nº22) ZAR500 Z350",
+    "536240": "BOBINA 0.95 X 1000 (Nº20) ZAR500 Z350",
+    "536147": "BOBINA 1.25 X 1000 (Nº18) ZAR500 Z350",
+    "536148": "BOBINA 1.55 X 1000 (Nº16) ZAR500 Z350",
+    "536149": "BOBINA 1.95 X 1000 (Nº14) ZAR500 Z350",
+    "536150": "BOBINA 2.30 X 1000 (Nº13) ZAR500 Z350",
+    "536151": "BOBINA 2.70 X 1000 (Nº12) ZAR500 Z350",
+    "536152": "BOBINA 3.00 X 1000 (Nº11) ZAR500 Z350",
+    "536134": "BOBINA 0.80 X 1200 (Nº22) Z275 NBR7008",
+    "532868": "BOBINA 1.25 X 1000 (Nº18) Z275 NBR7008",
+    "532865": "BOBINA 1.25 X 1200 (Nº18) Z275 NBR7008",
+    "532873": "BOBINA 1.55 X 1000 (Nº16) Z275 NBR7008",
+    "532858": "BOBINA 1.55 X 1200 (Nº16) Z275 NBR7008",
+    "532869": "BOBINA 1.95 X 1000 (Nº14) Z275 NBR7008",
+    "532860": "BOBINA 1.95 X 1200 (Nº14) Z275 NBR7008",
+    "532861": "BOBINA 2.70 X 1200 (Nº12) Z275 NBR7008",
+    "533745": "BOBINA 3.00 X 1200 (Nº11) Z275 NBR7008",
+    "536507": "BOBINA 1.25 X 998 (Nº18) ZAR230 Z100 (PENEIRAS)",
+    "532882": "BOBINA 1.50 X 1200 (Nº16) P FF SAE1008/1020",
+    "536306": "BOBINA 1.50 X 1500 (Nº16) P FF SAE1008/1020",
+    "532809": "BOBINA 2.00 X 1200 (Nº14) P FQ SAE1008/1020",
+    "532810": "BOBINA 2.65 X 1200 (Nº12) P FQ SAE1008/1020",
+    "532883": "BOBINA 3.00 X 1200 (Nº11) P FQ SAE1008/1020",
+    "532877": "BOBINA 2.00 X 1200 (Nº14) P FQ COR420",
+    "532876": "BOBINA 2.65 X 1200 (Nº12) P FQ COR420",
+    "532941": "BOBINA 3.00 X 1200 (Nº11) P FQ COR420",
+    "534509": "BOBINA 2.65 X 1200 (Nº12) SAE1045",
+    "533418": "BOBINA 3.00 X 1200 (Nº11) P FQ SAE1045",
+    "535436": "BOBINA 3.00 X 744 (Nº11) P FQ SAE1045 (CANO D240)",
+    "535437": "BOBINA 3.00 X 996 (Nº11) P FQ SAE1045 (CANO D320)",
+    "083624": "BOBINA 0.80 X 1200 (Nº22) ZC AZM150 GALVALUME",
+    "536530": "BOBINA 0.80 X 1250 (Nº22) ZC AZM150 GALVALUME",
+    "535689": "BOBINA 0.95 X 1200 (Nº20) ZC AZM150 GALVALUME",
+    "543134": "BOBINA 0.80 X 1400 (Nº22) ZC AZM150 GALVALUME",
+    "543136": "BOBINA 0.80 X 1500 (Nº22) ZC AZM150 GALVALUME",
+    "533947": "BOBINA 0.80 X 1200 ZC100 PRE PINTADA VERMELHO RAL 3001",
+    "533796": "BOBINA 0.95 X 1200 ZC100 PRE PINTADA BRANCO RAL 9003",
+    "535636": "SLITER 1.55 X 550 (Nº16) Z275 NBR7008 [P/ LCS]",
+    "535637": "SLITER 1.55 X 355 (Nº16) Z275 NBR7008 [P/ LCS]",
+    "535638": "SLITER 1.55 X 284 (Nº16) Z275 NBR7008 [P/ LCS]",
+    "536698": "SLITER 1.95 X 50 (Nº14) Z275 NBR7008	",
+    "533207": "BOBINA 1.20 X 1200 (Nº18) P FF SAE1008/1020"
+  };
+$(function() {
+  // Configuração do autocomplete para o código
+  $("#codigo").autocomplete({
+    source: codigos,
+    autoFocus: true, // Foca automaticamente na primeira sugestão
+    delay: 0 // Remove o atraso padrão
+  });
+
+  // Evento que detecta quando o usuário pressiona 'Enter' ou 'Tab'
+  $("#codigo").on("keydown", function(event) {
+    if (event.key === "Enter" || event.key === "Tab") {
+      event.preventDefault(); // Evita que o formulário seja enviado ou que o foco mude
+      const codigoSelecionado = $(this).val();
+      if (codigos.includes(codigoSelecionado)) {
+        $("#descricao").val(descricoes[codigoSelecionado] || "Descrição não encontrada, estamos melhorando as coisas...");
+      }
+    }
+  });
+
+  // Configuração do autocomplete para a descrição
+  $("#descricao").autocomplete({
+    source: function(request, response) {
+      const results = $.ui.autocomplete.filter(Object.values(descricoes), request.term);
+      response(results.slice(0, 40)); // Limita os resultados a 40 itens
+    },
+    select: function(event, ui) {
+      const descricaoSelecionada = ui.item.value;
+      const codigoCorrespondente = Object.keys(descricoes).find(key => descricoes[key] === descricaoSelecionada);
+      $("#codigo").val(codigoCorrespondente || "Código não encontrado");
+    }
+  });
+});
+
+  function coletarDados() {
+    const codigo = document.getElementById('codigo').value;
+    const descricao = document.getElementById('descricao').value;
+    const peso = document.getElementById('peso').value;
+    const lote = document.getElementById('lote').value;
+    const observacao = document.getElementById('observacao').value;
+    const alerta = document.getElementById('alerta');
+    const modal = document.getElementById('myModal');
+    const modalMessage = document.getElementById('modalMessage');
+
+    alerta.textContent = ""; // Limpa o alerta
+
+    if (codigo === "" || peso === "") {
+        alerta.textContent = "Verifique se o código ou peso estão preenchidos";
+        alerta.style.display = "block";
+    } else {
+        document.getElementById('loading').style.display = 'block'; // Mostra a página de carregamento
+        google.script.run.withSuccessHandler(function(response) {
+            document.getElementById('loading').style.display = 'none'; // Esconde a página de carregamento
+            if (response.includes("sucesso")) {
+                modalMessage.textContent = response;
+                modal.style.display = "block";
+            } else {
+                alerta.textContent = response;
+                alerta.style.display = "block";
+            }
+        }).incluirNaPlanilha(codigo,descricao, peso, lote, observacao);
+    }
+  }
+
+  function fecharModal() {
+    const modal = document.getElementById('myModal');
+    modal.style.display = "none";
+    document.getElementById('formulario').reset(); // Reseta o formulário
+  }
+  </script>
+</body>
+
+</html>
